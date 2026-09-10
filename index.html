@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubick Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #050605;
+    --bg-deep: #020302;
+    --surface: #0d100d;
+    --line: rgba(184,255,41,0.22);
+    --acid: #baff29;
+    --acid-soft: rgba(186,255,41,0.14);
+    --text: #eafbe4;
+    --muted: #808c7a;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Manrope', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  h1,h2,h3,.display{
+    font-family: 'Unbounded', 'Manrope', sans-serif;
+    margin:0;
+    line-height: 1.1;
+  }
+
+  a{ color: inherit; text-decoration:none; }
+
+  /* ---------- ambient acid grid backdrop ---------- */
+  .grid-bg{
+    position: fixed; inset: -10%;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    opacity: 0.35;
+    mask-image: radial-gradient(circle at 50% 25%, black 0%, transparent 65%);
+    animation: drift 40s linear infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
+  @keyframes drift{
+    from{ background-position: 0 0, 0 0; }
+    to{ background-position: 128px 128px, 128px 128px; }
+  }
+  .glow-orb{
+    position: fixed;
+    width: 640px; height: 640px;
+    top: -260px; left: 50%; transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(186,255,41,0.16), transparent 70%);
+    filter: blur(10px);
+    z-index: 0;
+    pointer-events:none;
+  }
+
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding: 96px 0 72px;
+    text-align: center;
+    display:flex; flex-direction:column; align-items:center;
+  }
+
+  .hero h1{
+    font-size: clamp(2.4rem, 8vw, 3.6rem);
+    font-weight: 900;
+    letter-spacing: 0.01em;
+    color: var(--text);
+    text-shadow: 0 0 28px rgba(186,255,41,0.35);
+    opacity: 0;
+    animation: rise 0.9s ease forwards;
+    cursor: default;
+    transition: text-shadow .3s ease;
+  }
+  .hero h1:hover{
+    animation: rise 0.9s ease forwards, glitch 0.35s steps(2) 1;
+  }
+  @keyframes glitch{
+    0%{ text-shadow: 2px 0 var(--acid), -2px 0 #ff2ec4; }
+    50%{ text-shadow: -2px 0 var(--acid), 2px 0 #ff2ec4; }
+    100%{ text-shadow: 0 0 28px rgba(186,255,41,0.35); }
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(18px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  /* wireframe rotating cube */
+  .cube-stage{
+    margin: 52px 0 44px;
+    perspective: 620px;
+    opacity: 0;
+    animation: rise 0.9s ease 0.15s forwards;
+  }
+  .cube{
+    position: relative;
+    width: 128px; height: 128px;
+    transform-style: preserve-3d;
+    animation: spin 18s linear infinite;
+  }
+  .cube .face{
+    position: absolute; inset: 0;
+    width: 128px; height: 128px;
+    border: 2px solid var(--acid);
+    background-image:
+      linear-gradient(var(--acid-soft), var(--acid-soft)),
+      linear-gradient(45deg, transparent 48%, rgba(186,255,41,0.25) 49%, rgba(186,255,41,0.25) 51%, transparent 52%),
+      linear-gradient(-45deg, transparent 48%, rgba(186,255,41,0.25) 49%, rgba(186,255,41,0.25) 51%, transparent 52%);
+    box-shadow: inset 0 0 24px rgba(186,255,41,0.12);
+  }
+  /* each face gets its own opacity/glow so the box always reads as volumetric, not a flat square */
+  .face-front { transform: translateZ(64px); opacity: 0.95; filter: drop-shadow(0 0 14px rgba(186,255,41,0.65)); }
+  .face-back  { transform: rotateY(180deg) translateZ(64px); opacity: 0.35; }
+  .face-right { transform: rotateY(90deg) translateZ(64px); opacity: 0.8; filter: drop-shadow(0 0 10px rgba(186,255,41,0.45)); }
+  .face-left  { transform: rotateY(-90deg) translateZ(64px); opacity: 0.55; }
+  .face-top   { transform: rotateX(90deg) translateZ(64px); opacity: 1; filter: drop-shadow(0 0 16px rgba(186,255,41,0.7)); }
+  .face-bottom{ transform: rotateX(-90deg) translateZ(64px); opacity: 0.3; }
+
+  @keyframes spin{
+    from{ transform: rotateX(-32deg) rotateY(0deg); }
+    to{ transform: rotateX(-32deg) rotateY(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .cube{ animation: none; transform: rotateX(-32deg) rotateY(-35deg); }
+    .grid-bg{ animation: none; }
+  }
+
+  /* telegram pill button */
+  .tg-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 40px;
+    border-radius: 999px;
+    border: 1.5px solid var(--acid);
+    background: var(--bg-deep);
+    color: var(--acid);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 1.02rem;
+    letter-spacing: 0.02em;
+    box-shadow: 0 0 0 0 rgba(186,255,41,0.5);
+    animation: rise 0.9s ease 0.3s forwards, pulse 3.4s ease-in-out 1.2s infinite;
+    opacity: 0;
+    transition: background .25s ease, color .25s ease, transform .25s ease;
+  }
+  .tg-btn:hover{
+    background: var(--acid);
+    color: #04150a;
+    transform: translateY(-2px) scale(1.03);
+  }
+  .tg-btn svg{ width: 22px; height: 22px; flex-shrink:0; }
+  .tg-btn:hover svg{ fill: #04150a; }
+  .tg-btn svg path{ fill: var(--acid); transition: fill .25s ease; }
+  .tg-btn:hover svg path{ fill: #04150a; }
+
+  @keyframes pulse{
+    0%, 100%{ box-shadow: 0 0 0 0 rgba(186,255,41,0.35); }
+    50%{ box-shadow: 0 0 0 10px rgba(186,255,41,0); }
+  }
+
+  /* ---------- GAMES ---------- */
+  .games{
+    padding: 60px 0 110px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .game-card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .7s ease, transform .7s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .game-card.in-view{
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .game-card:hover{
+    border-color: var(--acid);
+    box-shadow: 0 0 32px rgba(186,255,41,0.14);
+  }
+
+  .game-media{
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .game-media img{
+    width: 100%;
+    height: auto;
+    max-height: 78vh;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    background: var(--bg-deep);
+    filter: grayscale(0.15) contrast(1.05);
+    transition: transform .6s ease, filter .6s ease;
+  }
+  .game-card:hover .game-media img{
+    transform: scale(1.06);
+    filter: grayscale(0) contrast(1.1);
+  }
+  .game-media::after{
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.55));
+    pointer-events: none;
+  }
+
+  .game-card h3{
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-top: 22px;
+  }
+
+  .dl-btn{
+    display: inline-flex;
+    align-items:center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 13px 30px;
+    background: var(--acid);
+    color: #04150a;
+    font-weight: 800;
+    font-size: 0.92rem;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--acid);
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+    transition: background .25s ease, color .25s ease, transform .25s ease, box-shadow .25s ease;
+  }
+  .dl-btn:hover{
+    background: transparent;
+    color: var(--acid);
+    transform: translateY(-2px);
+    box-shadow: 0 0 24px rgba(186,255,41,0.4);
+  }
+
+  @media (max-width: 760px){
+    .games{ grid-template-columns: 1fr; }
+    .hero{ padding-top: 68px; }
+    .cube-stage{ margin: 40px 0 34px; }
+    .cube, .cube .face{ width: 100px; height: 100px; }
+    .face-front { transform: translateZ(50px); }
+    .face-back  { transform: rotateY(180deg) translateZ(50px); }
+    .face-right { transform: rotateY(90deg) translateZ(50px); }
+    .face-left  { transform: rotateY(-90deg) translateZ(50px); }
+    .face-top   { transform: rotateX(90deg) translateZ(50px); }
+    .face-bottom{ transform: rotateX(-90deg) translateZ(50px); }
+    .cube-stage{ perspective: 480px; }
+    .tg-btn{ padding: 14px 30px; }
+  }
+
+  /* ---------- DONATE ---------- */
+  .donate{
+    padding: 10px 0 90px;
+    text-align: center;
+  }
+  .donate-label{
+    color: var(--muted);
+    font-size: 0.96rem;
+    margin-bottom: 24px;
+  }
+  .donate-btn{
+    position: relative;
+    display: inline-block;
+    padding: 3px;
+    border-radius: 999px;
+    background: conic-gradient(from 0deg, var(--acid), transparent 22%, transparent 45%, var(--acid) 60%, transparent 82%, var(--acid));
+  }
+  .donate-btn::after{
+    content: '';
+    position: absolute; inset: -8px;
+    border-radius: 999px;
+    background: inherit;
+    filter: blur(14px);
+    z-index: -1;
+    animation: pulse-glow 2.6s ease-in-out infinite;
+  }
+  .donate-btn-inner{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-deep);
+    color: var(--acid);
+    padding: 17px 44px;
+    border-radius: 999px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 1.04rem;
+    letter-spacing: 0.02em;
+    transition: background .25s ease, color .25s ease, transform .25s ease;
+  }
+  .donate-btn:hover .donate-btn-inner{
+    background: var(--acid);
+    color: #04150a;
+    transform: scale(1.04);
+  }
+  .donate-btn svg{ width: 22px; height: 22px; flex-shrink: 0; }
+  .donate-btn svg path{ fill: var(--acid); transition: fill .25s ease; }
+  .donate-btn:hover svg path{ fill: #04150a; }
+
+  @keyframes rotate-gradient{
+    to{ transform: rotate(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .donate-btn{ animation: none; }
+  }
+
+  footer{
+    text-align:center;
+    padding: 30px 0 44px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    position: relative; z-index:1;
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="glow-orb"></div>
+
+<section class="hero wrap">
+  <h1>KUBICK STUDIO</h1>
+
+  <div class="cube-stage">
+    <div class="cube">
+      <div class="face face-front"></div>
+      <div class="face face-back"></div>
+      <div class="face face-right"></div>
+      <div class="face face-left"></div>
+      <div class="face face-top"></div>
+      <div class="face face-bottom"></div>
+    </div>
+  </div>
+
+  <a class="tg-btn" href="https://t.me/the_kubicki" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M21.5 3.5 2.6 10.9c-1.2.47-1.19 1.13-.22 1.42l4.8 1.5 1.85 5.7c.22.6.38.84.77.84.36 0 .53-.16.74-.38l1.98-1.9 4.5 3.32c.83.46 1.42.22 1.63-.77l2.95-13.9c.3-1.24-.46-1.8-1.7-1.32Zm-4.53 3.36L8.7 13.1c-.24.15-.24.37-.05.5l.05-.02Zm0 0-.03 0-.94 3.9-.5-3.02c-.02-.14.05-.29.19-.37l7.8-4.85c.24-.15.46-.03.28.24Z"/>
+    </svg>
+    Telegram
+  </a>
+</section>
+
+<section class="games wrap">
+
+  <div class="game-card">
+    <div class="game-media">
+      <img src="https://raw.githubusercontent.com/haress484/Photo_site/main/Screenshot_2026-09-10-09-50-20-534_com.radolyn.ayugram.png" alt="Counter Aleksekys">
+    </div>
+    <h3>Counter Aleksekys</h3>
+    <a class="dl-btn" href="https://github.com/haress484/CounterAleksekys/releases/download/v1.0/CounterAleksekys.zip">Скачать</a>
+  </div>
+
+  <div class="game-card">
+    <div class="game-media">
+      <img src="https://raw.githubusercontent.com/haress484/Photo_site/main/Screenshot_2026-09-10-09-50-36-594_com.radolyn.ayugram.png" alt="Saratov Parkur">
+    </div>
+    <h3>Saratov Parkur</h3>
+    <a class="dl-btn" href="https://github.com/haress484/CounterAleksekys/releases/download/v1.0/SATTAROV.apk">Скачать</a>
+  </div>
+
+</section>
+
+<section class="donate wrap">
+  <p class="donate-label">Нравится то, что мы делаем?</p>
+  <a class="donate-btn" href="https://pay.cloudtips.ru/p/70fd1379" target="_blank" rel="noopener">
+    <span class="donate-btn-inner">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 20.9 3.8 12.7C1.6 10.5 1.6 7 3.8 4.8s5.7-2.2 7.9 0l.3.3.3-.3c2.2-2.2 5.7-2.2 7.9 0s2.2 5.7 0 7.9L12 20.9Z"/>
+      </svg>
+      Задонатить
+    </span>
+  </a>
+</section>
+
+<footer>© 2026 Kubick Studio</footer>
+
+<script>
+  const cards = document.querySelectorAll('.game-card');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting){
+        e.target.classList.add('in-view');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  cards.forEach(c => obs.observe(c));
+</script>
+
+</body>
+</html>
