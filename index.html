@@ -2,190 +2,291 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Kubick Studio — 3D</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubick Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #050605;
     --bg-deep: #020302;
+    --surface: #0d100d;
+    --line: rgba(184,255,41,0.22);
     --acid: #baff29;
     --acid-soft: rgba(186,255,41,0.14);
     --text: #eafbe4;
     --muted: #808c7a;
   }
-  *{
-    box-sizing: border-box;
-    margin: 0; padding: 0;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
+
+  *{ box-sizing: border-box; }
   html{ scroll-behavior: smooth; }
   body{
+    margin:0;
     background: var(--bg);
     color: var(--text);
     font-family: 'Manrope', sans-serif;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
-    height: 500vh;
+    position: relative;
   }
-  h1,h2,h3{ font-family: 'Unbounded', sans-serif; line-height:1.1; }
+
+  h1,h2,h3,.display{
+    font-family: 'Unbounded', 'Manrope', sans-serif;
+    margin:0;
+    line-height: 1.1;
+  }
+
   a{ color: inherit; text-decoration:none; }
 
-  #canvas3d{
+  /* ---------- ambient acid grid backdrop ---------- */
+  .grid-bg{
+    position: fixed; inset: -10%;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    opacity: 0.35;
+    mask-image: radial-gradient(circle at 50% 25%, black 0%, transparent 65%);
+    animation: drift 40s linear infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
+  @keyframes drift{
+    from{ background-position: 0 0, 0 0; }
+    to{ background-position: 128px 128px, 128px 128px; }
+  }
+  .glow-orb{
     position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    width: 640px; height: 640px;
+    top: -260px; left: 50%; transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(186,255,41,0.16), transparent 70%);
+    filter: blur(10px);
+    z-index: 0;
+    pointer-events:none;
+  }
+
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
     z-index: 1;
-    display: block;
   }
 
-  /* плашка с ошибкой — видна только если что-то сломалось */
-  #errBox{
-    display: none;
-    position: fixed;
-    top: 12px; left: 12px; right: 12px;
-    z-index: 999;
-    background: rgba(120,10,10,0.92);
-    color: #fff;
-    font-family: monospace;
-    font-size: 13px;
-    line-height: 1.4;
-    padding: 12px 14px;
-    border: 1px solid #ff5555;
-    border-radius: 8px;
-    white-space: pre-wrap;
-    pointer-events: none;
-  }
-
-  .overlay{
-    position: fixed;
-    inset: 0;
-    z-index: 10;
-    pointer-events: none;
-  }
-  .overlay a, .overlay button{ pointer-events: auto; }
-
-  .hero-ui{
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: clamp(64px, 12vh, 110px) 20px 0;
+  /* ---------- HERO ---------- */
+  .hero{
+    padding: 96px 0 72px;
     text-align: center;
-    transition: opacity 0.6s ease;
+    display:flex; flex-direction:column; align-items:center;
   }
-  .hero-ui h1{
-    font-size: clamp(1.9rem, 8vw, 3.8rem);
+
+  .hero h1{
+    font-size: clamp(2.4rem, 8vw, 3.6rem);
     font-weight: 900;
     letter-spacing: 0.01em;
     color: var(--text);
-    text-shadow:
-      0 0 28px rgba(186,255,41,0.55),
-      0 0 60px rgba(186,255,41,0.25);
+    text-shadow: 0 0 28px rgba(186,255,41,0.35);
+    opacity: 0;
+    animation: rise 0.9s ease forwards;
     cursor: default;
+    transition: text-shadow .3s ease;
   }
-  .hero-ui .subtitle{
-    margin-top: 12px;
-    color: var(--muted);
-    font-size: clamp(0.8rem, 2.6vw, 1rem);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  .hero h1:hover{
+    animation: rise 0.9s ease forwards, glitch 0.35s steps(2) 1;
+  }
+  @keyframes glitch{
+    0%{ text-shadow: 2px 0 var(--acid), -2px 0 #ff2ec4; }
+    50%{ text-shadow: -2px 0 var(--acid), 2px 0 #ff2ec4; }
+    100%{ text-shadow: 0 0 28px rgba(186,255,41,0.35); }
   }
 
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(18px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  /* wireframe rotating cube */
+  .cube-stage{
+    margin: 52px 0 44px;
+    perspective: 620px;
+    opacity: 0;
+    animation: rise 0.9s ease 0.15s forwards;
+  }
+  .cube{
+    position: relative;
+    width: 128px; height: 128px;
+    transform-style: preserve-3d;
+    animation: spin 18s linear infinite;
+  }
+  .cube .face{
+    position: absolute; inset: 0;
+    width: 128px; height: 128px;
+    border: 2px solid var(--acid);
+    background-image:
+      linear-gradient(var(--acid-soft), var(--acid-soft)),
+      linear-gradient(45deg, transparent 48%, rgba(186,255,41,0.25) 49%, rgba(186,255,41,0.25) 51%, transparent 52%),
+      linear-gradient(-45deg, transparent 48%, rgba(186,255,41,0.25) 49%, rgba(186,255,41,0.25) 51%, transparent 52%);
+    box-shadow: inset 0 0 24px rgba(186,255,41,0.12);
+  }
+  /* each face gets its own opacity/glow so the box always reads as volumetric, not a flat square */
+  .face-front { transform: translateZ(64px); opacity: 0.95; filter: drop-shadow(0 0 14px rgba(186,255,41,0.65)); }
+  .face-back  { transform: rotateY(180deg) translateZ(64px); opacity: 0.35; }
+  .face-right { transform: rotateY(90deg) translateZ(64px); opacity: 0.8; filter: drop-shadow(0 0 10px rgba(186,255,41,0.45)); }
+  .face-left  { transform: rotateY(-90deg) translateZ(64px); opacity: 0.55; }
+  .face-top   { transform: rotateX(90deg) translateZ(64px); opacity: 1; filter: drop-shadow(0 0 16px rgba(186,255,41,0.7)); }
+  .face-bottom{ transform: rotateX(-90deg) translateZ(64px); opacity: 0.3; }
+
+  @keyframes spin{
+    from{ transform: rotateX(-32deg) rotateY(0deg); }
+    to{ transform: rotateX(-32deg) rotateY(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .cube{ animation: none; transform: rotateX(-32deg) rotateY(-35deg); }
+    .grid-bg{ animation: none; }
+  }
+
+  /* telegram pill button */
   .tg-btn{
-    position: absolute;
-    top: clamp(16px, 3vh, 32px);
-    right: clamp(16px, 3vw, 32px);
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: clamp(10px, 1.6vh, 14px) clamp(18px, 3vw, 28px);
+    gap: 12px;
+    padding: 16px 40px;
     border-radius: 999px;
     border: 1.5px solid var(--acid);
-    background: rgba(5,6,5,0.7);
-    backdrop-filter: blur(8px);
+    background: var(--bg-deep);
     color: var(--acid);
+    font-family: 'Manrope', sans-serif;
     font-weight: 700;
-    font-size: clamp(0.82rem, 2.4vw, 0.95rem);
+    font-size: 1.02rem;
     letter-spacing: 0.02em;
-    transition: background .25s ease, color .25s ease, transform .25s ease, box-shadow .25s ease;
+    box-shadow: 0 0 0 0 rgba(186,255,41,0.5);
+    animation: rise 0.9s ease 0.3s forwards, pulse 3.4s ease-in-out 1.2s infinite;
+    opacity: 0;
+    transition: background .25s ease, color .25s ease, transform .25s ease;
   }
   .tg-btn:hover{
     background: var(--acid);
     color: #04150a;
-    transform: translateY(-2px) scale(1.04);
-    box-shadow: 0 0 28px rgba(186,255,41,0.55);
+    transform: translateY(-2px) scale(1.03);
   }
-  .tg-btn svg{ width: 20px; height: 20px; flex-shrink: 0; }
+  .tg-btn svg{ width: 22px; height: 22px; flex-shrink:0; }
+  .tg-btn:hover svg{ fill: #04150a; }
   .tg-btn svg path{ fill: var(--acid); transition: fill .25s ease; }
   .tg-btn:hover svg path{ fill: #04150a; }
 
-  .scroll-hint{
-    position: absolute;
-    bottom: clamp(20px, 5vh, 44px);
-    left: 50%;
-    transform: translateX(-50%);
-    color: var(--acid);
-    font-size: clamp(0.7rem, 2.2vw, 0.85rem);
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    animation: float 2s ease-in-out infinite;
-    white-space: nowrap;
-  }
-  @keyframes float{
-    0%,100%{ transform: translateX(-50%) translateY(0); opacity:0.9; }
-    50%{ transform: translateX(-50%) translateY(-10px); opacity:0.5; }
+  @keyframes pulse{
+    0%, 100%{ box-shadow: 0 0 0 0 rgba(186,255,41,0.35); }
+    50%{ box-shadow: 0 0 0 10px rgba(186,255,41,0); }
   }
 
-  .games-ui{
-    position: absolute;
-    top: clamp(56px, 9vh, 72px);
-    left: 0; right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 0 16px;
+  /* ---------- GAMES ---------- */
+  .games{
+    padding: 60px 0 110px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .game-card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px;
+    text-align: center;
     opacity: 0;
-    transition: opacity 0.8s ease;
+    transform: translateY(28px);
+    transition: opacity .7s ease, transform .7s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .game-card.in-view{
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .game-card:hover{
+    border-color: var(--acid);
+    box-shadow: 0 0 32px rgba(186,255,41,0.14);
+  }
+
+  .game-media{
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .game-media img{
+    width: 100%;
+    height: auto;
+    max-height: 78vh;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    background: var(--bg-deep);
+    filter: grayscale(0.15) contrast(1.05);
+    transition: transform .6s ease, filter .6s ease;
+  }
+  .game-card:hover .game-media img{
+    transform: scale(1.06);
+    filter: grayscale(0) contrast(1.1);
+  }
+  .game-media::after{
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.55));
     pointer-events: none;
   }
-  .games-ui.active{ opacity: 1; pointer-events: auto; }
 
-  .games-title{
-    font-size: clamp(1.3rem, 5vw, 2.4rem);
+  .game-card h3{
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-top: 22px;
+  }
+
+  .dl-btn{
+    display: inline-flex;
+    align-items:center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 13px 30px;
+    background: var(--acid);
+    color: #04150a;
     font-weight: 800;
-    margin-bottom: 8px;
-    text-shadow: 0 0 20px rgba(186,255,41,0.5);
+    font-size: 0.92rem;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--acid);
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+    transition: background .25s ease, color .25s ease, transform .25s ease, box-shadow .25s ease;
   }
-  .games-subtitle{
+  .dl-btn:hover{
+    background: transparent;
+    color: var(--acid);
+    transform: translateY(-2px);
+    box-shadow: 0 0 24px rgba(186,255,41,0.4);
+  }
+
+  @media (max-width: 760px){
+    .games{ grid-template-columns: 1fr; }
+    .hero{ padding-top: 68px; }
+    .cube-stage{ margin: 40px 0 34px; }
+    .cube, .cube .face{ width: 100px; height: 100px; }
+    .face-front { transform: translateZ(50px); }
+    .face-back  { transform: rotateY(180deg) translateZ(50px); }
+    .face-right { transform: rotateY(90deg) translateZ(50px); }
+    .face-left  { transform: rotateY(-90deg) translateZ(50px); }
+    .face-top   { transform: rotateX(90deg) translateZ(50px); }
+    .face-bottom{ transform: rotateX(-90deg) translateZ(50px); }
+    .cube-stage{ perspective: 480px; }
+    .tg-btn{ padding: 14px 30px; }
+  }
+
+  /* ---------- DONATE ---------- */
+  .donate{
+    padding: 10px 0 90px;
+    text-align: center;
+  }
+  .donate-label{
     color: var(--muted);
-    font-size: clamp(0.75rem, 2.4vw, 0.9rem);
-    letter-spacing: 0.05em;
+    font-size: 0.96rem;
+    margin-bottom: 24px;
   }
-
-  .donate-ui{
-    position: fixed;
-    left: clamp(14px, 3vw, 32px);
-    bottom: clamp(14px, 4vh, 32px);
-    z-index: 20;
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-    pointer-events: none;
-  }
-  .donate-ui.active{ opacity: 1; transform: translateX(0); pointer-events: auto; }
-
   .donate-btn{
     position: relative;
     display: inline-block;
@@ -195,89 +296,109 @@
   }
   .donate-btn::after{
     content: '';
-    position: absolute; inset: -10px;
+    position: absolute; inset: -8px;
     border-radius: 999px;
     background: inherit;
-    filter: blur(16px);
+    filter: blur(14px);
     z-index: -1;
-    opacity: 0.6;
+    animation: pulse-glow 2.6s ease-in-out infinite;
   }
   .donate-btn-inner{
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     background: var(--bg-deep);
     color: var(--acid);
-    padding: clamp(11px, 1.8vh, 15px) clamp(20px, 4vw, 30px);
+    padding: 17px 44px;
     border-radius: 999px;
+    font-family: 'Manrope', sans-serif;
     font-weight: 800;
-    font-size: clamp(0.82rem, 2.5vw, 0.95rem);
+    font-size: 1.04rem;
     letter-spacing: 0.02em;
+    animation: breathe 2.6s ease-in-out infinite;
     transition: background .25s ease, color .25s ease, transform .25s ease;
   }
   .donate-btn:hover .donate-btn-inner{
     background: var(--acid);
     color: #04150a;
-    transform: scale(1.05);
+    transform: scale(1.04);
+    animation-play-state: paused;
   }
-  .donate-btn svg{ width: 18px; height: 18px; flex-shrink: 0; }
+  .donate-btn svg{ width: 22px; height: 22px; flex-shrink: 0; }
   .donate-btn svg path{ fill: var(--acid); transition: fill .25s ease; }
   .donate-btn:hover svg path{ fill: #04150a; }
 
-  .progress{
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 3px;
-    background: rgba(186,255,41,0.08);
-    z-index: 50;
+  @keyframes pulse-glow{
+    0%, 100%{ opacity: 0.35; }
+    50%{ opacity: 0.75; }
   }
-  .progress span{
-    display: block;
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, var(--acid), #5bff88);
-    box-shadow: 0 0 10px var(--acid);
-    transition: width 0.1s linear;
+  @keyframes breathe{
+    0%, 100%{ transform: scale(1); }
+    50%{ transform: scale(1.025); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .donate-btn::after{ animation: none; }
+    .donate-btn-inner{ animation: none; }
   }
 
-  @media (max-width: 760px){
-    body{ height: 420vh; }
-    .games-ui{ top: 64px; }
-  }
-  @media (max-width: 760px) and (orientation: landscape){
-    body{ height: 500vh; }
-    .hero-ui{ padding-top: 48px; }
-    .games-ui{ top: 40px; }
+  footer{
+    text-align:center;
+    padding: 30px 0 44px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    position: relative; z-index:1;
   }
 </style>
 </head>
 <body>
 
-<div id="errBox"></div>
+<div class="grid-bg"></div>
+<div class="glow-orb"></div>
 
-<canvas id="canvas3d"></canvas>
+<section class="hero wrap">
+  <h1>KUBICK STUDIO</h1>
 
-<div class="overlay">
-  <div class="hero-ui" id="heroUi">
-    <a class="tg-btn" href="https://t.me/the_kubicki" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21.5 3.5 2.6 10.9c-1.2.47-1.19 1.13-.22 1.42l4.8 1.5 1.85 5.7c.22.6.38.84.77.84.36 0 .53-.16.74-.38l1.98-1.9 4.5 3.32c.83.46 1.42.22 1.63-.77l2.95-13.9c.3-1.24-.46-1.8-1.7-1.32Zm-4.53 3.36L8.7 13.1c-.24.15-.24.37-.05.5l.05-.02Zm0 0-.03 0-.94 3.9-.5-3.02c-.02-.14.05-.29.19-.37l7.8-4.85c.24-.15.46-.03.28.24Z"/>
-      </svg>
-      Telegram
-    </a>
-
-    <h1>KUBICK STUDIO</h1>
-    <p class="subtitle">Scroll to enter the cube</p>
-    <div class="scroll-hint">↓ scroll down ↓</div>
+  <div class="cube-stage">
+    <div class="cube">
+      <div class="face face-front"></div>
+      <div class="face face-back"></div>
+      <div class="face face-right"></div>
+      <div class="face face-left"></div>
+      <div class="face face-top"></div>
+      <div class="face face-bottom"></div>
+    </div>
   </div>
 
-  <div class="games-ui" id="gamesUi">
-    <h2 class="games-title">OUR GAMES</h2>
-    <p class="games-subtitle">Choose your experience</p>
-  </div>
-</div>
+  <a class="tg-btn" href="https://t.me/the_kubicki" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M21.5 3.5 2.6 10.9c-1.2.47-1.19 1.13-.22 1.42l4.8 1.5 1.85 5.7c.22.6.38.84.77.84.36 0 .53-.16.74-.38l1.98-1.9 4.5 3.32c.83.46 1.42.22 1.63-.77l2.95-13.9c.3-1.24-.46-1.8-1.7-1.32Zm-4.53 3.36L8.7 13.1c-.24.15-.24.37-.05.5l.05-.02Zm0 0-.03 0-.94 3.9-.5-3.02c-.02-.14.05-.29.19-.37l7.8-4.85c.24-.15.46-.03.28.24Z"/>
+    </svg>
+    Telegram
+  </a>
+</section>
 
-<div class="donate-ui" id="donateUi">
+<section class="games wrap">
+
+  <div class="game-card">
+    <div class="game-media">
+      <img src="https://raw.githubusercontent.com/haress484/Photo_site/main/Screenshot_2026-09-10-09-50-20-534_com.radolyn.ayugram.png" alt="Counter Aleksekys">
+    </div>
+    <h3>Counter Aleksekys</h3>
+    <a class="dl-btn" href="https://github.com/haress484/CounterAleksekys/releases/download/v1.0/CounterAleksekys.zip">Скачать</a>
+  </div>
+
+  <div class="game-card">
+    <div class="game-media">
+      <img src="https://raw.githubusercontent.com/haress484/Photo_site/main/Screenshot_2026-09-10-09-50-36-594_com.radolyn.ayugram.png" alt="Saratov Parkur">
+    </div>
+    <h3>Saratov Parkur</h3>
+    <a class="dl-btn" href="https://github.com/haress484/CounterAleksekys/releases/download/v1.0/SATTAROV.apk">Скачать</a>
+  </div>
+
+</section>
+
+<section class="donate wrap">
+  <p class="donate-label">Нравится то, что мы делаем?</p>
   <a class="donate-btn" href="https://pay.cloudtips.ru/p/70fd1379" target="_blank" rel="noopener">
     <span class="donate-btn-inner">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -286,554 +407,21 @@
       Задонатить
     </span>
   </a>
-</div>
+</section>
 
-<div class="progress"><span id="progressBar"></span></div>
+<footer>© 2026 Kubick Studio</footer>
 
-<!-- ДИАГНОСТИКА: ловит ошибки загрузки CDN и JS, показывает на экране -->
 <script>
-(function(){
-  function show(msg){
-    var box = document.getElementById('errBox');
-    if (!box) return;
-    box.style.display = 'block';
-    box.textContent = msg;
-  }
-  window.__showErr = show;
-  window.addEventListener('error', function(e){
-    if (e.target && e.target !== window && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')){
-      show('Не удалось загрузить внешний ресурс (CDN/шрифты заблокированы?):\n' + (e.target.src || e.target.href || ''));
-    } else {
-      show('Ошибка JS:\n' + (e.message || 'неизвестная'));
-    }
-  }, true);
-  window.addEventListener('unhandledrejection', function(e){
-    show('Ошибка JS (promise):\n' + ((e.reason && e.reason.message) ? e.reason.message : e.reason));
-  });
-  setTimeout(function(){
-    if (!window.__sceneReady){
-      show('3D-сцена не запустилась за 7 секунд.\nВозможные причины: нет интернета, заблокирован CDN jsdelivr, или браузер не поддерживает WebGL/importmap.');
-    }
-  }, 7000);
-})();
-</script>
-
-<!-- Надёжный CDN: jsdelivr (официальная схема three + addons) -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
-  }
-}
-</script>
-
-<script type="module">
-import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-
-try {
-
-const isMobile = matchMedia('(max-width: 760px)').matches;
-
-const canvas = document.getElementById('canvas3d');
-
-// проверка WebGL до создания сцены
-const testGl = document.createElement('canvas');
-const gl = testGl.getContext('webgl2') || testGl.getContext('webgl');
-if (!gl) throw new Error('WebGL не поддерживается этим браузером/устройством');
-
-const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x050605, 9, 38);
-
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
-camera.position.set(0, 0, 10);
-
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.8 : 2));
-renderer.setClearColor(0x050605, 1);
-
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(
-  new THREE.Vector2(innerWidth, innerHeight),
-  0.65, 0.55, 0.3
-);
-composer.addPass(bloom);
-
-const acidColor = new THREE.Color(0xbaff29);
-const wireMat = new THREE.LineBasicMaterial({ color: acidColor, transparent: true, opacity: 1 });
-const darkMat = new THREE.MeshBasicMaterial({ color: 0x151815, transparent: true, opacity: 1 });
-
-// ============================================
-// OUTER SPACE (cube)
-// ============================================
-const outerGroup = new THREE.Group();
-scene.add(outerGroup);
-
-const cubeGroup = new THREE.Group();
-outerGroup.add(cubeGroup);
-
-const CUBE_SIZE = 3;
-const HALF = CUBE_SIZE / 2;
-
-const faceData = [
-  { pos:[0,0,HALF],   rot:[0,0,0] },
-  { pos:[0,0,-HALF],  rot:[0,Math.PI,0] },
-  { pos:[HALF,0,0],   rot:[0,Math.PI/2,0] },
-  { pos:[-HALF,0,0],  rot:[0,-Math.PI/2,0] },
-  { pos:[0,HALF,0],   rot:[-Math.PI/2,0,0] },
-  { pos:[0,-HALF,0],  rot:[Math.PI/2,0,0] }
-];
-
-faceData.forEach(fd => {
-  const geo = new THREE.PlaneGeometry(CUBE_SIZE, CUBE_SIZE);
-  const mat = new THREE.MeshBasicMaterial({
-    color: acidColor, transparent: true, opacity: 0.08, side: THREE.DoubleSide
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(fd.pos[0], fd.pos[1], fd.pos[2]);
-  mesh.rotation.set(fd.rot[0], fd.rot[1], fd.rot[2]);
-
-  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), wireMat.clone());
-  mesh.add(edges);
-
-  const diagGeo = new THREE.BufferGeometry();
-  const h = HALF;
-  diagGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
-    -h,-h,0.01,  h,h,0.01,
-    -h,h,0.01,   h,-h,0.01
-  ]), 3));
-  const diag = new THREE.LineSegments(diagGeo, wireMat.clone());
-  diag.material.opacity = 0.55;
-  mesh.add(diag);
-
-  cubeGroup.add(mesh);
-});
-
-const particleCount = isMobile ? 300 : 600;
-const pGeo = new THREE.BufferGeometry();
-const pPos = new Float32Array(particleCount * 3);
-for (let i = 0; i < particleCount; i++){
-  pPos[i*3]   = (Math.random()-0.5) * 60;
-  pPos[i*3+1] = (Math.random()-0.5) * 60;
-  pPos[i*3+2] = (Math.random()-0.5) * 60;
-}
-pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
-  color: acidColor, size: 0.08, transparent: true, opacity: 0.6, sizeAttenuation: true
-}));
-outerGroup.add(particles);
-
-const gridHelper = new THREE.GridHelper(80, 80, acidColor, acidColor);
-gridHelper.material.opacity = 0.12;
-gridHelper.material.transparent = true;
-gridHelper.position.y = -5;
-outerGroup.add(gridHelper);
-
-// ============================================
-// INNER SPACE
-// ============================================
-const innerGroup = new THREE.Group();
-innerGroup.visible = false;
-scene.add(innerGroup);
-
-const innerCount = isMobile ? 120 : 220;
-const iPGeo = new THREE.BufferGeometry();
-const iPPos = new Float32Array(innerCount * 3);
-for (let i = 0; i < innerCount; i++){
-  iPPos[i*3]   = (Math.random()-0.5) * 40;
-  iPPos[i*3+1] = (Math.random()-0.5) * 16;
-  iPPos[i*3+2] = -Math.random() * 35 - 3;
-}
-iPGeo.setAttribute('position', new THREE.BufferAttribute(iPPos, 3));
-const innerParticles = new THREE.Points(iPGeo, new THREE.PointsMaterial({
-  color: acidColor, size: 0.16, transparent: true, opacity: 0.8, sizeAttenuation: true
-}));
-innerGroup.add(innerParticles);
-
-const innerGrid = new THREE.GridHelper(60, 60, acidColor, acidColor);
-innerGrid.material.opacity = 0.16;
-innerGrid.material.transparent = true;
-innerGrid.position.set(0, -2.6, -10);
-innerGroup.add(innerGrid);
-
-// ============================================
-// GAME SLABS
-// ============================================
-const loader = new THREE.TextureLoader();
-const gameData = [
-  {
-    image: 'https://raw.githubusercontent.com/haress484/Photo_site/main/Screenshot_2026-09-10-09-50-20-534_com.radolyn.ayugram.png',
-    name: 'Counter Aleksekys',
-    download: 'https://github.com/haress484/CounterAleksekys/releases/download/v1.0/CounterAleksekys.zip',
-    fileName: 'CounterAleksekys.zip'
-  },
-  {
-    image: 'https://raw.githubusercontent.com/haress484/Photo_site/main/Screenshot_2026-09-10-09-50-36-594_com.radolyn.ayugram.png',
-    name: 'Saratov Parkur',
-    download: 'https://github.com/haress484/CounterAleksekys/releases/download/v1.0/SATTAROV.apk',
-    fileName: 'Saratov_Parkur.apk'
-  }
-];
-
-function createTextTexture(text, w, h, fontSize) {
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = 'rgba(8,10,8,0.97)';
-  ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = 'rgba(186,255,41,0.75)';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(4, 4, w-8, h-8);
-  ctx.fillStyle = '#baff29';
-  ctx.font = `bold ${fontSize}px Unbounded, Arial, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, w/2, h/2 + 4);
-  const tex = new THREE.CanvasTexture(c);
-  tex.needsUpdate = true;
-  return tex;
-}
-
-function createDownloadButtonTexture() {
-  const c = document.createElement('canvas');
-  c.width = 256; c.height = 256;
-  const ctx = c.getContext('2d');
-
-  ctx.fillStyle = 'rgba(8,10,8,0.97)';
-  ctx.beginPath(); ctx.arc(128,128,120,0,Math.PI*2); ctx.fill();
-
-  ctx.strokeStyle = 'rgba(186,255,41,0.9)';
-  ctx.lineWidth = 6;
-  ctx.beginPath(); ctx.arc(128,128,113,0,Math.PI*2); ctx.stroke();
-
-  ctx.strokeStyle = '#baff29';
-  ctx.lineWidth = 14;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  ctx.beginPath();
-  ctx.moveTo(128, 62);
-  ctx.lineTo(128, 138);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(96, 108);
-  ctx.lineTo(128, 140);
-  ctx.lineTo(160, 108);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(78, 148);
-  ctx.lineTo(78, 176);
-  ctx.lineTo(178, 176);
-  ctx.lineTo(178, 148);
-  ctx.stroke();
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.needsUpdate = true;
-  return tex;
-}
-
-const gameDisplays = [];
-const nameTextures = [];
-
-gameData.forEach((game, i) => {
-  const group = new THREE.Group();
-  group.position.set(i === 0 ? -2.7 : 2.7, 0, -8);
-  group.visible = false;
-
-  const fadeMats = [];
-
-  const slabTilt = new THREE.Group();
-  slabTilt.rotation.x = 0.30;
-  group.add(slabTilt);
-
-  const slabMat = darkMat.clone();
-  slabMat.opacity = 0;
-  const slab = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.22, 4.6), slabMat);
-  const slabEdges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(slab.geometry), wireMat.clone()
-  );
-  slabEdges.material.opacity = 0;
-  slab.add(slabEdges);
-  slabTilt.add(slab);
-  fadeMats.push(slabMat, slabEdges.material);
-
-  const imgMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide
-  });
-  const imgPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 3.9), imgMat);
-  imgPlane.rotation.x = -Math.PI / 2;
-  imgPlane.position.y = 0.125;
-  const imgEdges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(imgPlane.geometry), wireMat.clone()
-  );
-  imgEdges.material.opacity = 0;
-  imgPlane.add(imgEdges);
-  slabTilt.add(imgPlane);
-  fadeMats.push(imgMat, imgEdges.material);
-
-  loader.load(game.image, (tex) => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearFilter;
-    imgMat.map = tex;
-    imgMat.needsUpdate = true;
-  });
-
-  [-1.05, 1.05].forEach(sx => {
-    const beamMat = darkMat.clone();
-    beamMat.opacity = 0;
-    const beam = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 3.6), beamMat);
-    beam.position.set(sx, -0.56, 0);
-    const beamEdges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(beam.geometry), wireMat.clone()
-    );
-    beamEdges.material.opacity = 0;
-    beam.add(beamEdges);
-    slabTilt.add(beam);
-    fadeMats.push(beamMat, beamEdges.material);
-  });
-
-  const nameMat = new THREE.MeshBasicMaterial({
-    map: createTextTexture(game.name, 640, 120, 44),
-    transparent: true, opacity: 0, side: THREE.DoubleSide
-  });
-  const namePlane = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.55), nameMat);
-  namePlane.position.set(0, -1.45, 2.45);
-  const nameEdges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(namePlane.geometry), wireMat.clone()
-  );
-  nameEdges.material.opacity = 0;
-  namePlane.add(nameEdges);
-  group.add(namePlane);
-  fadeMats.push(nameMat, nameEdges.material);
-  nameTextures.push({ mat: nameMat, text: game.name });
-
-  const dlMat = new THREE.MeshBasicMaterial({
-    map: createDownloadButtonTexture(),
-    transparent: true, opacity: 0, side: THREE.DoubleSide
-  });
-  const dlPlane = new THREE.Mesh(new THREE.CircleGeometry(0.5, 48), dlMat);
-  dlPlane.position.set(0, -2.3, 2.5);
-  group.add(dlPlane);
-  fadeMats.push(dlMat);
-
-  innerGroup.add(group);
-  gameDisplays.push({
-    group, slabTilt, fadeMats, dlPlane,
-    downloadUrl: game.download,
-    fileName: game.fileName,
-    hoverK: 0,
-    pulse: 0
-  });
-});
-
-if (document.fonts && document.fonts.ready){
-  document.fonts.ready.then(() => {
-    nameTextures.forEach(o => {
-      o.mat.map = createTextTexture(o.text, 640, 120, 44);
-      o.mat.needsUpdate = true;
+  const cards = document.querySelectorAll('.game-card');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting){
+        e.target.classList.add('in-view');
+        obs.unobserve(e.target);
+      }
     });
-  });
-}
-
-// ============================================
-// АДАПТИВНАЯ РАСКЛАДКА
-// ============================================
-const layout = {
-  spread: 2.7,
-  scale: 1,
-  fitDist: 5,
-  finalY: 1,
-  finalZ: -3,
-  focus: new THREE.Vector3(0, -1.0, -7.4)
-};
-
-function updateLayout(){
-  const aspect = innerWidth / innerHeight;
-  const portrait = aspect < 0.85;
-
-  camera.fov = portrait ? 75 : 60;
-  layout.spread = portrait ? 2.2 : 2.7;
-  layout.scale  = portrait ? 0.8 : 1;
-
-  const W  = layout.spread + 1.6 * layout.scale;
-  const Hh = 2.4 * layout.scale;
-  const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
-  const tanH = tanV * aspect;
-  layout.fitDist = THREE.MathUtils.clamp(
-    Math.max(W / tanH, Hh / tanV) * 1.18, 4.2, 16
-  );
-
-  const elev = THREE.MathUtils.degToRad(24);
-  layout.finalY = layout.focus.y + Math.sin(elev) * layout.fitDist;
-  layout.finalZ = layout.focus.z + Math.cos(elev) * layout.fitDist;
-
-  gameDisplays.forEach((d, i) => {
-    d.group.position.x = (i === 0 ? -1 : 1) * layout.spread;
-    d.group.scale.setScalar(layout.scale);
-  });
-
-  camera.updateProjectionMatrix();
-}
-updateLayout();
-
-// ============================================
-// SCROLL
-// ============================================
-let scrollTarget = 0, scrollCurrent = 0;
-function getScrollProgress(){
-  const max = document.documentElement.scrollHeight - innerHeight;
-  return max > 0 ? scrollY / max : 0;
-}
-window.addEventListener('scroll', () => { scrollTarget = getScrollProgress(); }, { passive: true });
-
-function smoothstep(e0, e1, x){
-  const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
-  return t * t * (3 - 2 * t);
-}
-
-const heroUi = document.getElementById('heroUi');
-const gamesUi = document.getElementById('gamesUi');
-const donateUi = document.getElementById('donateUi');
-const progressBar = document.getElementById('progressBar');
-
-// ============================================
-// CLICK / HOVER + НАТИВНАЯ ЗАГРУЗКА
-// ============================================
-const raycaster = new THREE.Raycaster();
-const mouseVec = new THREE.Vector2();
-let hoveredDisplay = null;
-
-function pickButton(e){
-  const rect = canvas.getBoundingClientRect();
-  mouseVec.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-  mouseVec.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(mouseVec, camera);
-  const targets = gameDisplays.filter(g => g.group.visible).map(g => g.dlPlane);
-  const hits = raycaster.intersectObjects(targets, false);
-  if (!hits.length) return null;
-  return gameDisplays.find(g => g.dlPlane === hits[0].object) || null;
-}
-
-function triggerNativeDownload(url, fileName){
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName || '';
-  a.rel = 'noopener';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-canvas.addEventListener('click', (e) => {
-  const d = pickButton(e);
-  if (d){
-    d.pulse = 1;
-    triggerNativeDownload(d.downloadUrl, d.fileName);
-  }
-});
-canvas.addEventListener('mousemove', (e) => {
-  hoveredDisplay = pickButton(e);
-  canvas.style.cursor = hoveredDisplay ? 'pointer' : 'default';
-});
-canvas.addEventListener('mouseleave', () => {
-  hoveredDisplay = null;
-  canvas.style.cursor = 'default';
-});
-
-// ============================================
-// ANIMATION
-// ============================================
-const clock = new THREE.Clock();
-const lookTarget = new THREE.Vector3();
-const Z_IN = -3;
-
-function animate(){
-  const t = clock.getElapsedTime();
-  scrollCurrent += (scrollTarget - scrollCurrent) * 0.08;
-  const p = scrollCurrent;
-  progressBar.style.width = (p * 100) + '%';
-
-  const idlePhase = 1 - smoothstep(0, 0.35, p);
-  cubeGroup.rotation.y = t * 0.3 * idlePhase + p * Math.PI * 0.5;
-  cubeGroup.rotation.x = Math.sin(t * 0.2) * 0.2 * idlePhase;
-
-  const flyT  = smoothstep(0.22, 0.68, p);
-  const riseT = smoothstep(0.62, 0.92, p);
-
-  let z = 10 + (Z_IN - 10) * flyT;
-  z = z + (layout.finalZ - Z_IN) * riseT;
-  camera.position.z = z;
-  camera.position.y = layout.finalY * riseT + Math.cos(t * 0.2) * 0.15 * idlePhase;
-  camera.position.x = Math.sin(t * 0.3) * 0.25 * idlePhase;
-
-  const passedThrough = flyT > 0.85;
-  outerGroup.visible = !passedThrough;
-  innerGroup.visible = passedThrough;
-
-  const lookT = smoothstep(0.6, 0.9, p);
-  lookTarget.set(0, layout.focus.y * lookT, layout.focus.z * lookT);
-  camera.lookAt(lookTarget);
-
-  const displayT = smoothstep(0.75, 0.97, p);
-  gameDisplays.forEach((d, i) => {
-    d.group.visible = passedThrough && displayT > 0.01;
-    d.group.position.y = -1.8 + displayT * 1.8;
-    d.fadeMats.forEach(m => { m.opacity = displayT; });
-    d.slabTilt.position.y = Math.sin(t * 0.7 + i * Math.PI) * 0.06 * displayT;
-
-    const hoverTarget = (hoveredDisplay === d) ? 1 : 0;
-    d.hoverK = THREE.MathUtils.lerp(d.hoverK, hoverTarget, 0.15);
-    d.pulse *= 0.88;
-    const btnScale = 1 + 0.12 * d.hoverK + 0.22 * d.pulse;
-    d.dlPlane.scale.setScalar(btnScale);
-  });
-
-  if (innerGroup.visible){
-    innerParticles.rotation.y = t * 0.03;
-  } else {
-    particles.rotation.y = t * 0.02;
-    particles.rotation.x = t * 0.01;
-  }
-
-  heroUi.style.opacity = 1 - smoothstep(0.1, 0.35, p);
-  gamesUi.classList.toggle('active', passedThrough && displayT > 0.3);
-  donateUi.classList.toggle('active', passedThrough && displayT > 0.5);
-
-  composer.render();
-  requestAnimationFrame(animate);
-}
-animate();
-
-window.__sceneReady = true;
-
-// ============================================
-// RESIZE
-// ============================================
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
-  updateLayout();
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.8 : 2));
-  composer.setSize(innerWidth, innerHeight);
-});
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
-});
-
-} catch (err) {
-  console.error(err);
-  if (window.__showErr){
-    window.__showErr('Ошибка инициализации 3D:\n' + ((err && err.message) ? err.message : String(err)));
-  }
-}
+  }, { threshold: 0.15 });
+  cards.forEach(c => obs.observe(c));
 </script>
 
 </body>
