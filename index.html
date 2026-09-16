@@ -291,8 +291,11 @@
     position: relative;
     display: inline-block;
     padding: 3px;
-    border-radius: 999px;
+    border: none;
     background: conic-gradient(from 0deg, var(--acid), transparent 22%, transparent 45%, var(--acid) 60%, transparent 82%, var(--acid));
+    border-radius: 999px;
+    cursor: pointer;
+    font: inherit;
   }
   .donate-btn::after{
     content: '';
@@ -339,6 +342,82 @@
   @media (prefers-reduced-motion: reduce){
     .donate-btn::after{ animation: none; }
     .donate-btn-inner{ animation: none; }
+  }
+
+  /* ---------- DONATE MODAL ---------- */
+  .modal-overlay{
+    position: fixed; inset: 0;
+    background: rgba(2,3,2,0.82);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease, visibility .3s ease;
+  }
+  .modal-overlay.active{ opacity: 1; visibility: visible; }
+
+  .modal-box{
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    background: var(--surface);
+    border: 1px solid var(--acid);
+    box-shadow: 0 0 44px rgba(186,255,41,0.22);
+    padding: 38px 30px 32px;
+    text-align: center;
+    transform: scale(0.9) translateY(12px);
+    transition: transform .3s ease;
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  }
+  .modal-overlay.active .modal-box{ transform: scale(1) translateY(0); }
+
+  .modal-close{
+    position: absolute; top: 12px; right: 16px;
+    background: none; border: none;
+    color: var(--muted);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color .2s ease;
+  }
+  .modal-close:hover{ color: var(--acid); }
+
+  .modal-box h3{
+    font-size: 1.28rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 28px;
+  }
+
+  .modal-options{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .modal-option{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border: 1.5px solid var(--acid);
+    color: var(--acid);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    background: transparent;
+    transition: background .25s ease, color .25s ease, transform .2s ease;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  .modal-option:hover{
+    background: var(--acid);
+    color: #04150a;
+    transform: translateY(-2px);
   }
 
   footer{
@@ -399,15 +478,26 @@
 
 <section class="donate wrap">
   <p class="donate-label">Нравится то, что мы делаем?</p>
-  <a class="donate-btn" href="https://pay.cloudtips.ru/p/70fd1379" target="_blank" rel="noopener">
+  <button type="button" class="donate-btn" onclick="openDonateModal()">
     <span class="donate-btn-inner">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 20.9 3.8 12.7C1.6 10.5 1.6 7 3.8 4.8s5.7-2.2 7.9 0l.3.3.3-.3c2.2-2.2 5.7-2.2 7.9 0s2.2 5.7 0 7.9L12 20.9Z"/>
       </svg>
       Задонатить
     </span>
-  </a>
+  </button>
 </section>
+
+<div class="modal-overlay" id="donateModal" onclick="if(event.target===this) closeDonateModal()">
+  <div class="modal-box">
+    <button type="button" class="modal-close" onclick="closeDonateModal()">✕</button>
+    <h3>Как задонатить?</h3>
+    <div class="modal-options">
+      <a class="modal-option" href="https://pay.cloudtips.ru/p/70fd1379" target="_blank" rel="noopener">💳 Картой</a>
+      <a class="modal-option" href="tg://send_gift?to=the_kubick">⭐ Звёздами</a>
+    </div>
+  </div>
+</div>
 
 <footer>© 2026 Kubick Studio</footer>
 
@@ -422,6 +512,18 @@
     });
   }, { threshold: 0.15 });
   cards.forEach(c => obs.observe(c));
+
+  function openDonateModal(){
+    document.getElementById('donateModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDonateModal(){
+    document.getElementById('donateModal').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDonateModal();
+  });
 </script>
 
 </body>
