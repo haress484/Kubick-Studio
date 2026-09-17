@@ -21,6 +21,16 @@
 
   *{ box-sizing: border-box; }
   html{ scroll-behavior: smooth; }
+  *{
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  ::selection{ background: transparent; }
+  ::-moz-selection{ background: transparent; }
   body{
     margin:0;
     background: var(--bg);
@@ -342,6 +352,43 @@
   @media (prefers-reduced-motion: reduce){
     .donate-btn::after{ animation: none; }
     .donate-btn-inner{ animation: none; }
+    .promo-img{ animation: none; }
+    .promo-caption{ animation: none; }
+  }
+
+  .promo-link{
+    margin-top: 40px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .promo-img{
+    display: block;
+    width: 220px;
+    max-width: 60vw;
+    transform-origin: top center;
+    animation: sway 3.2s ease-in-out infinite;
+    transition: filter .3s ease;
+  }
+  .promo-link:hover .promo-img{
+    filter: drop-shadow(0 0 20px rgba(186,255,41,0.5));
+  }
+  @keyframes sway{
+    0%, 100%{ transform: rotate(-5deg); }
+    50%{ transform: rotate(5deg); }
+  }
+  .promo-caption{
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.2rem, 10vw, 3.3rem);
+    letter-spacing: 0.1em;
+    color: var(--acid);
+    animation: caption-blink 1.8s ease-in-out infinite;
+  }
+  @keyframes caption-blink{
+    0%, 100%{ opacity: 0.55; }
+    50%{ opacity: 1; }
   }
 
   /* ---------- DONATE MODAL ---------- */
@@ -486,6 +533,11 @@
       Задонатить
     </span>
   </button>
+
+  <a class="promo-link" href="https://haress484.github.io/Dota-Drop/" target="_blank" rel="noopener">
+    <img class="promo-img" src="https://raw.githubusercontent.com/haress484/Dota-Drop/main/spam_dota_drop.png" alt="Dota Drop">
+    <span class="promo-caption">ЖМИ</span>
+  </a>
 </section>
 
 <div class="modal-overlay" id="donateModal" onclick="if(event.target===this) closeDonateModal()">
