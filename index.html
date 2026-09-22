@@ -6,7 +6,7 @@
 <title>Kubick Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Manrope:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #050605;
@@ -536,8 +536,110 @@
 
   <a class="promo-link" href="https://haress484.github.io/Dota-Drop/" target="_blank" rel="noopener">
     <img class="promo-img" src="https://raw.githubusercontent.com/haress484/Dota-Drop/main/spam_dota_drop.png" alt="Dota Drop">
-    <span class="promo-caption">ЖМИ</span>
+    <span class="promo-caption">Dota Drop</span>
   </a>
+
+  <!-- ВИДЖЕТ MINECRAFT DROP -->
+  <div class="mcdrop-widget" id="mcdrop-widget" title="Играть в Minecraft Drop">
+    <canvas id="mcdrop-canvas" width="400" height="400"></canvas>
+  </div>
+  <style>
+  .mcdrop-widget{
+    width:min(70vw,340px);
+    margin:60px auto 30px;
+    cursor:pointer;
+    transition:transform .15s, box-shadow .25s ease;
+    border: 1.5px solid var(--acid);
+    background: var(--bg-deep);
+    box-shadow: 0 0 22px rgba(186,255,41,0.25);
+    padding: 10px;
+  }
+  .mcdrop-widget:hover{ transform:scale(1.06); box-shadow: 0 0 34px rgba(186,255,41,0.45); }
+  .mcdrop-widget canvas{ width:100%; height:auto; display:block; image-rendering:pixelated; }
+  </style>
+  <script>
+  (function(){
+    const GAME_URL='https://haress484.github.io/Minecraft-Drop/index.html';
+    const BASE='https://raw.githubusercontent.com/haress484/Minecraft-Drop/main/';
+    const BLOCKS=['grass_block.png','dirt.png','stone_block.png','sand.png','coal_ore.png','iron_ore.png','diamond_ore.png','workbench.png','tnt.jpg','slime_block.png','obsidian.png'];
+    const canvas=document.getElementById('mcdrop-canvas');
+    const ctx=canvas.getContext('2d');
+    const imgs={}; let pick=null;
+
+    function makeTransparent(img,th=235){
+      const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+      const x=c.getContext('2d'); x.drawImage(img,0,0);
+      const d=x.getImageData(0,0,c.width,c.height);
+      for(let i=0;i<d.data.length;i+=4){ if(d.data[i]>th&&d.data[i+1]>th&&d.data[i+2]>th) d.data[i+3]=0; }
+      x.putImageData(d,0,0); return c;
+    }
+    BLOCKS.forEach((f,i)=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>{imgs[i]=im;}; im.src=BASE+f; });
+    const pIm=new Image(); pIm.crossOrigin='anonymous'; pIm.onload=()=>{ pick=makeTransparent(pIm); }; pIm.src=BASE+'diamond_pickaxe.png';
+
+    let idx=0, phase='windup', theta=15, parts=[], last=0;
+    function spawn(x,y){ for(let i=0;i<12;i++) parts.push({x,y,vx:(Math.random()-.7)*6,vy:(Math.random()-.5)*6-2,life:1,size:4+Math.random()*4}); }
+
+    function frame(ts){
+      if(!last) last=ts;
+      const dt=Math.min(ts-last,50)/1000; last=ts;
+      ctx.clearRect(0,0,400,400);
+      ctx.imageSmoothingEnabled=false;
+      const cx=200, cy=200, bs=100, ps=120;
+      const b=imgs[idx];
+      if(b) ctx.drawImage(b,cx-bs/2,cy-bs/2,bs,bs);
+      else { ctx.fillStyle='#8B4513'; ctx.fillRect(cx-bs/2,cy-bs/2,bs,bs); }
+      if(phase==='windup'){ theta+=(55-15)*dt/0.15; if(theta>=55){theta=55;phase='swing';} }
+      else if(phase==='swing'){ theta-=(55+150)*dt/0.10; if(theta<=-150){ theta=-150; phase='recover'; spawn(cx-bs/2+20,cy-bs/2+10); idx=(idx+1)%BLOCKS.length; } }
+      else { theta+=(15+150)*dt/0.25; if(theta>=15){theta=15;phase='windup';} }
+      if(pick){ ctx.save(); ctx.translate(cx+75,cy-10); ctx.rotate(theta*Math.PI/180); ctx.drawImage(pick,0,-ps,ps,ps); ctx.restore(); }
+      for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.4; p.life-=0.03;
+        if(p.life<=0) parts.splice(i,1);
+        else { ctx.globalAlpha=p.life; ctx.fillStyle='#A0522D'; ctx.fillRect(p.x,p.y,p.size,p.size); ctx.globalAlpha=1; } }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    document.getElementById('mcdrop-widget').addEventListener('click',()=>{ window.open(GAME_URL,'_blank'); });
+  })();
+  </script>
+
+  <div class="mcdrop-title">Minecraft Drop</div>
+  <style>
+  @import url('https://fonts.cdnfonts.com/css/minecraft-4');
+  .mcdrop-title{
+    width:max-content;
+    max-width: 90vw;
+    margin:6px auto 26px;
+    font-family:'Minecraft','Press Start 2P',monospace;
+    font-size:clamp(2.2rem,10vw,3.3rem);
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:transparent;
+    background:url('https://raw.githubusercontent.com/haress484/Minecraft-Drop/main/stone_block.png') repeat;
+    background-size:48px 48px;
+    -webkit-background-clip:text;
+    background-clip:text;
+    filter:
+      drop-shadow(1px 0 0 #141414)
+      drop-shadow(-1px 0 0 #141414)
+      drop-shadow(0 1px 0 #141414)
+      drop-shadow(0 -1px 0 #141414)
+      drop-shadow(0 4px 0 #3f3f3f);
+    image-rendering:pixelated;
+    cursor:default;
+    user-select:none;
+  }
+  @supports not (-webkit-background-clip:text){
+    .mcdrop-title{
+      color:#9a9a9a;
+      background:none;
+      text-shadow:
+        2px 2px 0 #141414, -2px 2px 0 #141414,
+        2px -2px 0 #141414, -2px -2px 0 #141414,
+        0 4px 0 #3f3f3f;
+    }
+  }
+  </style>
 </section>
 
 <div class="modal-overlay" id="donateModal" onclick="if(event.target===this) closeDonateModal()">
